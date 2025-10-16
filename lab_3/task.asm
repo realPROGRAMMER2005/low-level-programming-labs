@@ -23,11 +23,12 @@ skip_spaces:
     jmp skip_spaces
 
 check_length:
-    ; Проверка длины параметра (должно быть ровно 20 символов)
+    ; Проверка длины параметра
     cmp CL, 20
-    jne exit_program      ; Если не 20 символов - завершаем
+    jl too_short          ; Если меньше 20
+    jg too_long           ; Если больше 20
     
-    ; Анализ символов с 5 по 18 через 1
+    ; Анализ символов с 5 по 18 через 1 (ровно 20 символов)
     mov CX, 7             ; Количество итераций: (18-5)/2 + 1 = 7
     mov DI, SI            ; Сохраняем начало строки
     add DI, 4             ; Начинаем с 5-го символа (индекс 4)
@@ -58,13 +59,26 @@ not_digit:
     mov AL, BL
     mov AH, 0
     call print_number
-    
-    ; Завершение программы
+    jmp exit_program
+
+too_short:
+    ; Вывод сообщения о слишком короткой строке
+    mov AH, 09h
+    lea DX, short_msg
+    int 21h
+    jmp exit_program
+
+too_long:
+    ; Вывод сообщения о слишком длинной строке
+    mov AH, 09h
+    lea DX, long_msg
+    int 21h
     jmp exit_program
 
 beep_sound:
     ; Звуковой сигнал через порт динамика
     call beep
+    ; Сообщение не выводим при отсутствии параметра
     jmp exit_program
 
 exit_program:
@@ -113,6 +127,8 @@ beep endp
 
 ; Определения данных
 result_msg DB 'Number of digits (positions 5-18 step 2): $'
+short_msg DB 'Error: String too short (need 20 symbols)', 0Dh, 0Ah, '$'
+long_msg DB 'Error: String too long (need 20 symbols)', 0Dh, 0Ah, '$'
 
 text ends
 end start
